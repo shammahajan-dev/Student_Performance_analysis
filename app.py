@@ -16,7 +16,7 @@ import numpy as np
 # --------------------------------------------------
 
 # Path of the saved model
-model_path = "model.pkl"
+model_path = "Model.pkl"
 
 # Open the model file
 with open(model_path, "rb") as file:
