@@ -7,7 +7,7 @@ import streamlit as st
 import pickle
 
 # Import NumPy
-# NumPy is used to create the input data in array format
+# NumPy is used to create input data in array format
 import numpy as np
 
 
@@ -40,15 +40,44 @@ st.write("Enter student details to predict placement.")
 # STEP 3: Take input from the user
 # --------------------------------------------------
 
-# Create input boxes for the features
+# Take IQ value from the user
+IQ = st.number_input(
+    "IQ",
+    min_value=0.0,
+    value=70.0
+)
 
-feature1 = st.number_input("Feature 1", value=0)
+# Take CGPA value from the user
+CGPA = st.number_input(
+    "CGPA",
+    min_value=0.0,
+    max_value=10.0,
+    value=7.0
+)
 
-feature2 = st.number_input("Feature 2", value=0)
+# Take 10th marks from the user
+Marks_10th = st.number_input(
+    "10th Marks",
+    min_value=0.0,
+    max_value=100.0,
+    value=70.0
+)
 
-feature3 = st.number_input("Feature 3", value=0)
+# Take 12th marks from the user
+Marks_12th = st.number_input(
+    "12th Marks",
+    min_value=0.0,
+    max_value=100.0,
+    value=70.0
+)
 
-feature4 = st.number_input("Feature 4", value=0)
+# Take Communication Skills value from the user
+Communication_Skills = st.number_input(
+    "Communication Skills",
+    min_value=0.0,
+    max_value=10.0,
+    value=7.0
+)
 
 
 # --------------------------------------------------
@@ -60,21 +89,29 @@ feature4 = st.number_input("Feature 4", value=0)
 
 if st.button("Predict"):
 
-    # Store all user inputs in a list
-    int_features = [
-        feature1,
-        feature2,
-        feature3,
-        feature4
+    # Store all five input values in a list
+    # Keep the same order used during model training
+    input_data = [
+        IQ,
+        CGPA,
+        Marks_10th,
+        Marks_12th,
+        Communication_Skills
     ]
-
-    # Convert the list into a NumPy array
-    # ML model expects data in array format
-    final_features = np.array([int_features])
 
 
     # --------------------------------------------------
-    # STEP 5: Make prediction
+    # STEP 5: Convert input into NumPy array
+    # --------------------------------------------------
+
+    # Convert the list into a NumPy array
+    # The machine learning model expects data
+    # in 2D array format
+    final_features = np.array([input_data])
+
+
+    # --------------------------------------------------
+    # STEP 6: Make prediction
     # --------------------------------------------------
 
     # Send the input data to the trained model
@@ -82,7 +119,7 @@ if st.button("Predict"):
 
 
     # --------------------------------------------------
-    # STEP 6: Display the result
+    # STEP 7: Display the result
     # --------------------------------------------------
 
     # If prediction is 1, student is placed
@@ -90,7 +127,7 @@ if st.button("Predict"):
 
         st.success("Prediction: Placed")
 
-    # Otherwise, student is not placed
+    # If prediction is 0, student is not placed
     else:
 
         st.error("Prediction: Not Placed")
