@@ -1,68 +1,672 @@
 <!DOCTYPE html>
-<html>
+<!-- This line tells the browser: "This is an HTML5 page" -->
+<html lang="en">
 <head>
-    <title>Student Placement Prediction</title>
+    <!-- The <head> holds page settings. Only the <title> is visible (on the browser tab). -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlacePredict | Student Placement Prediction</title>
+
+    <!-- Load the "Inter" font from Google Fonts (needs internet) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
+        /* ============================================================
+           1. COLOR AND SIZE SETTINGS
+           We keep all main colors in one place (variables).
+           If you want a new theme, change the colors here only.
+           ============================================================ */
+        :root {
+            --navy:      #0f172a;   /* Very dark blue (hero background) */
+            --navy-soft: #1e293b;   /* Slightly lighter dark blue */
+            --primary:   #6366f1;   /* Main purple-blue color */
+            --primary-d: #4f46e5;   /* Darker version for hover */
+            --accent:    #22d3ee;   /* Bright cyan for highlights */
+            --bg:        #f1f5f9;   /* Light grey page background */
+            --card:      #ffffff;   /* White cards */
+            --text:      #0f172a;   /* Main text color */
+            --muted:     #64748b;   /* Grey text for small notes */
+            --border:    #e2e8f0;   /* Light border color */
+            --success:   #059669;   /* Green (placed) */
+            --success-bg:#ecfdf5;
+            --danger:    #dc2626;   /* Red (not placed) */
+            --danger-bg: #fef2f2;
+        }
+
+        /* Remove default browser spacing so we control everything */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Smooth scrolling when we jump to the result */
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 50px;
+            font-family: 'Inter', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
         }
-        .form-container {
-            max-width: 500px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ccc;
+
+        /* ============================================================
+           2. TOP NAVIGATION BAR
+           ============================================================ */
+        .navbar {
+            background: var(--navy);
+            padding: 16px 24px;
+        }
+        .navbar-inner {
+            max-width: 1100px;
+            margin: auto;                  /* Center the bar */
+            display: flex;
+            justify-content: space-between;/* Logo left, badge right */
+            align-items: center;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.3px;
+        }
+        .brand-logo {
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: grid;
+            place-items: center;           /* Center the icon inside */
         }
-        .form-container input {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0 20px 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
+        .nav-badge {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            border: 1px solid rgba(34, 211, 238, 0.4);
+            padding: 5px 12px;
+            border-radius: 999px;          /* Pill shape */
         }
-        .form-container input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-        }
-        .form-container input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .result {
-            font-size: 1.5em;
-            color: #4CAF50;
+
+        /* ============================================================
+           3. HERO SECTION (big title area)
+           ============================================================ */
+        .hero {
+            background:
+                radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.45), transparent 45%),
+                radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.25), transparent 40%),
+                var(--navy);
+            color: #fff;
             text-align: center;
-            margin-top: 20px;
+            padding: 56px 24px 120px;      /* Extra bottom space so the cards can overlap it */
+        }
+        .hero h1 {
+            font-size: clamp(28px, 5vw, 46px); /* Size adjusts with screen width */
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.15;
+        }
+        /* Gradient colored text for the highlighted word */
+        .hero h1 span {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .hero p {
+            max-width: 560px;
+            margin: 16px auto 0;
+            color: #94a3b8;
+            font-size: 16px;
+        }
+        /* Small info chips below the hero text */
+        .chips {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;               /* Go to next line on small screens */
+            gap: 10px;
+            margin-top: 28px;
+        }
+        .chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           4. MAIN LAYOUT (form on left, info panel on right)
+           ============================================================ */
+        .container {
+            max-width: 1100px;
+            margin: -80px auto 40px;       /* Negative top margin pulls cards up over the hero */
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr; /* Left is wider than right */
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* Common style for both cards */
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--border);
+        }
+        .card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .card .sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 4px;
+            margin-bottom: 20px;
+        }
+
+        /* ============================================================
+           5. PROGRESS BAR (shows how much of the form is filled)
+           ============================================================ */
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .progress-track {
+            height: 8px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 26px;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;                     /* JavaScript changes this value */
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 999px;
+            transition: width 0.4s ease;   /* Smooth growing effect */
+        }
+
+        /* ============================================================
+           6. FORM FIELDS
+           ============================================================ */
+        .field { margin-bottom: 24px; }
+
+        /* Label on the left, small tag on the right */
+        .field-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* Small colorful square holding the emoji */
+        .label-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #eef2ff;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+        }
+        .range-note {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            background: var(--bg);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* Slider and number box sit side by side */
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* The number box */
+        input[type="number"] {
+            width: 100px;
+            flex-shrink: 0;                /* Don't let it shrink */
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text);
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        input[type="number"]:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); /* Glow when clicked */
+        }
+
+        /* The slider (range input) */
+        input[type="range"] {
+            flex: 1;                       /* Take all remaining space */
+            -webkit-appearance: none;      /* Remove default look so we can style it */
+            appearance: none;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+        /* The round handle you drag (Chrome, Edge, Safari) */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 4px solid #fff;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.5);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        /* The same round handle for Firefox */
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 4px solid #fff;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.5);
+        }
+
+        /* ============================================================
+           7. BUTTONS
+           ============================================================ */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn {
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-primary {
+            flex: 1;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-d));
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);   /* Lift up on hover */
+            box-shadow: 0 14px 28px rgba(79, 70, 229, 0.45);
+        }
+        .btn-ghost {
+            color: var(--muted);
+            background: transparent;
+            border: 2px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--bg); color: var(--text); }
+        /* JavaScript adds this class while waiting for the result */
+        .btn.loading { pointer-events: none; opacity: 0.8; }
+
+        /* ============================================================
+           8. RIGHT SIDE PANEL
+           ============================================================ */
+        .side { display: flex; flex-direction: column; gap: 24px; }
+
+        /* Result card: shown only after Flask sends a prediction */
+        .result {
+            text-align: center;
+            padding: 28px 24px;
+            border-radius: 20px;
+            animation: pop 0.5s ease;
+        }
+        .result.good { background: var(--success-bg); border: 2px solid #6ee7b7; color: var(--success); }
+        .result.bad  { background: var(--danger-bg);  border: 2px solid #fca5a5; color: var(--danger); }
+        .result-icon { font-size: 44px; }
+        .result-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;     /* Make text CAPITAL */
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+        .result-text {
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+        @keyframes pop {
+            from { opacity: 0; transform: scale(0.92); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        /* "How it works" steps */
+        .step {
+            display: flex;
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .step-num {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #eef2ff;
+            color: var(--primary-d);
+            font-weight: 800;
+            font-size: 14px;
+            display: grid;
+            place-items: center;
+        }
+        .step h3 { font-size: 14px; font-weight: 700; }
+        .step p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        /* Small tip box */
+        .tip {
+            background: var(--navy);
+            color: #cbd5e1;
+            border-radius: 16px;
+            padding: 20px 22px;
+            font-size: 13px;
+        }
+        .tip strong { color: var(--accent); }
+
+        /* ============================================================
+           9. FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 10px 24px 40px;
+        }
+
+        /* ============================================================
+           10. MOBILE AND TABLET SUPPORT
+           ============================================================ */
+        @media (max-width: 860px) {
+            .container { grid-template-columns: 1fr; } /* Stack cards one below another */
+        }
+        @media (max-width: 480px) {
+            .card { padding: 22px; }
+            .input-row { gap: 10px; }
+            input[type="number"] { width: 82px; }
+            .btn-row { flex-direction: column-reverse; } /* Predict button on top */
         }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>Student Placement Prediction</h2>
-        <form action="/predict" method="post">
-            <label for="IQ">IQ:</label>
-            <input type="number" name="IQ" required>
-            
-            <label for="CGPA">CGPA:</label>
-            <input type="number" step="0.01" name="CGPA" required>
-            
-            <label for="10th_Marks">10th Marks:</label>
-            <input type="number" name="10th_Marks" required>
-            
-            <label for="12th_Marks">12th Marks:</label>
-            <input type="number" name="12th_Marks" required>
-            
-            <label for="Communication_Skills">Communication Skills:</label>
-            <input type="number" step="0.01" name="Communication_Skills" required>
-            
-            <input type="submit" value="Predict">
-        </form>
-        {% if prediction_text %}
-        <div class="result">{{ prediction_text }}</div>
-        {% endif %}
-    </div>
+
+    <!-- ===== TOP NAVIGATION BAR ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="brand">
+                <!-- Small logo icon (drawn with SVG, so it stays sharp on any screen) -->
+                <div class="brand-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 10L12 5 2 10l10 5 10-5z"/>
+                        <path d="M6 12v5c3 2 9 2 12 0v-5"/>
+                    </svg>
+                </div>
+                PlacePredict
+            </div>
+            <div class="nav-badge">⚡ ML Powered</div>
+        </div>
+    </nav>
+
+    <!-- ===== HERO SECTION ===== -->
+    <header class="hero">
+        <h1>Will you get <span>placed?</span><br>Find out in seconds.</h1>
+        <p>Enter your academic and skill details. Our machine learning model studies the pattern and predicts your placement chances.</p>
+        <div class="chips">
+            <div class="chip">📝 5 simple inputs</div>
+            <div class="chip">⚡ Instant result</div>
+            <div class="chip">🤖 Trained ML model</div>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="container">
+
+        <!-- LEFT CARD: the form -->
+        <section class="card">
+            <h2>Your Profile</h2>
+            <p class="sub">Move the slider or type the value directly.</p>
+
+            <!-- Progress bar: shows how many fields are filled -->
+            <div class="progress-row">
+                <span>Form completion</span>
+                <span id="progressText">0 / 5</span>
+            </div>
+            <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+
+            <!-- FORM: sends data to the Flask route "/predict" using POST (data is not shown in the URL) -->
+            <form action="/predict" method="post" id="predictForm">
+
+                <!-- Field 1: IQ -->
+                <div class="field">
+                    <div class="field-top">
+                        <label for="IQ"><span class="label-icon">🧠</span> IQ</label>
+                        <span class="range-note">70 – 160</span>
+                    </div>
+                    <div class="input-row">
+                        <!-- Slider: has NO name, it only helps the user. Its value is copied to the number box by JavaScript. -->
+                        <input type="range" id="IQ_slider" min="70" max="160" step="1" value="100" data-target="IQ">
+                        <!-- IMPORTANT: "name" must match what app.py reads. Do not change it. -->
+                        <input type="number" id="IQ" name="IQ" min="70" max="160" placeholder="100" required>
+                    </div>
+                </div>
+
+                <!-- Field 2: CGPA -->
+                <div class="field">
+                    <div class="field-top">
+                        <label for="CGPA"><span class="label-icon">📊</span> CGPA</label>
+                        <span class="range-note">0 – 10</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="CGPA_slider" min="0" max="10" step="0.01" value="7" data-target="CGPA">
+                        <!-- step="0.01" allows decimals like 7.85 -->
+                        <input type="number" id="CGPA" name="CGPA" step="0.01" min="0" max="10" placeholder="7.50" required>
+                    </div>
+                </div>
+
+                <!-- Field 3: 10th marks -->
+                <div class="field">
+                    <div class="field-top">
+                        <label for="10th_Marks"><span class="label-icon">📘</span> 10th Marks</label>
+                        <span class="range-note">0 – 100</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="10th_slider" min="0" max="100" step="1" value="70" data-target="10th_Marks">
+                        <input type="number" id="10th_Marks" name="10th_Marks" min="0" max="100" placeholder="85" required>
+                    </div>
+                </div>
+
+                <!-- Field 4: 12th marks -->
+                <div class="field">
+                    <div class="field-top">
+                        <label for="12th_Marks"><span class="label-icon">📗</span> 12th Marks</label>
+                        <span class="range-note">0 – 100</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="12th_slider" min="0" max="100" step="1" value="70" data-target="12th_Marks">
+                        <input type="number" id="12th_Marks" name="12th_Marks" min="0" max="100" placeholder="80" required>
+                    </div>
+                </div>
+
+                <!-- Field 5: Communication skills -->
+                <div class="field">
+                    <div class="field-top">
+                        <label for="Communication_Skills"><span class="label-icon">🗣️</span> Communication Skills</label>
+                        <span class="range-note">0 – 10</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="Comm_slider" min="0" max="10" step="0.01" value="5" data-target="Communication_Skills">
+                        <input type="number" id="Communication_Skills" name="Communication_Skills" step="0.01" min="0" max="10" placeholder="7.50" required>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="btn-row">
+                    <button type="reset" class="btn btn-ghost" id="resetBtn">Reset</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">🚀 Predict My Placement</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- RIGHT SIDE: result + help -->
+        <aside class="side">
+
+            {# Flask/Jinja block: this box appears ONLY when Flask sends "prediction_text".
+               On the first page load there is no prediction, so the box stays hidden.
+               {# #} comments are removed by Flask, so users never see them in View Source. #}
+            {% if prediction_text %}
+            <div class="result" id="resultBox">
+                <div class="result-icon" id="resultIcon">🎯</div>
+                <div class="result-label">Prediction Result</div>
+                {# {{ ... }} prints the value sent from Flask #}
+                <div class="result-text" id="resultText">{{ prediction_text }}</div>
+            </div>
+            {% endif %}
+
+            <!-- How it works card -->
+            <div class="card">
+                <h2>How it works</h2>
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div><h3>Enter your details</h3><p>Fill in your scores using sliders or the number boxes.</p></div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div><h3>Model analyses</h3><p>Our trained ML model compares your profile with past student data.</p></div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div><h3>Get your prediction</h3><p>See the result instantly on this page.</p></div>
+                </div>
+            </div>
+
+            <!-- Small tip -->
+            <div class="tip">
+                <strong>💡 Note:</strong> This is a prediction from a model, not a guarantee. Use it as guidance and keep improving your skills.
+            </div>
+        </aside>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">Built with Flask &amp; Machine Learning ✨</footer>
+
+    <script>
+        // JavaScript = makes the page interactive.
+
+        // ---------- 1. Get the important elements from the page ----------
+        var form        = document.getElementById('predictForm');
+        var submitBtn   = document.getElementById('submitBtn');
+        var progressBar = document.getElementById('progressBar');
+        var progressTxt = document.getElementById('progressText');
+
+        // All 5 number boxes (the ones that are really sent to Flask)
+        var numberInputs = form.querySelectorAll('input[type="number"]');
+        // All 5 sliders
+        var sliders = form.querySelectorAll('input[type="range"]');
+
+        // ---------- 2. Slider fill color ----------
+        // Paints the left part of the slider with color, so it looks like a progress line.
+        function paintSlider(slider) {
+            var min = Number(slider.min);
+            var max = Number(slider.max);
+            var percent = ((slider.value - min) / (max - min)) * 100;
+            slider.style.background =
+                'linear-gradient(90deg, #6366f1 ' + percent + '%, #e2e8f0 ' + percent + '%)';
+        }
+
+        // ---------- 3. Progress bar ----------
+        // Counts how many number boxes are filled and updates the bar.
+        function updateProgress() {
+            var filled = 0;
+            numberInputs.forEach(function (box) {
+                if (box.value !== '') { filled++; }
+            });
+            progressBar.style.width = (filled / numberInputs.length) * 100 + '%';
+            progressTxt.textContent = filled + ' / ' + numberInputs.length;
+        }
+
+        // ---------- 4. Connect each slider with its number box ----------
+        sliders.forEach(function (slider) {
+            var box = document.getElementById(slider.dataset.target);
+
+            // When the user moves the slider -> copy value into the number box
+            slider.addEventListener('input', function () {
+                box.value = slider.value;
+                paintSlider(slider);
+                updateProgress();
+            });
+
+            // When the user types in the number box -> move the slider too
+            box.addEventListener('input', function () {
+                if (box.value !== '') { slider.value = box.value; }
+                paintSlider(slider);
+                updateProgress();
+            });
+
+            paintSlider(slider); // Paint once when the page loads
+        });
+
+        // ---------- 5. Reset button ----------
+        // After the form resets, update the sliders and progress bar again.
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            setTimeout(function () {
+                sliders.forEach(paintSlider);
+                updateProgress();
+            }, 0);
+        });
+
+        // ---------- 6. Loading state on submit ----------
+        form.addEventListener('submit', function () {
+            submitBtn.classList.add('loading');        // Stops double clicks
+            submitBtn.textContent = '⏳ Analysing...'; // Shows the user something is happening
+        });
+
+        // ---------- 7. Style the result (green or red) ----------
+        // If Flask sent a result, we check its text.
+        // Text with "not" (like "Not Placed") becomes red. Anything else becomes green.
+        var resultBox = document.getElementById('resultBox');
+        if (resultBox) {
+            var text = document.getElementById('resultText').textContent.toLowerCase();
+            var isBad = text.indexOf('not') !== -1;
+
+            resultBox.classList.add(isBad ? 'bad' : 'good');
+            document.getElementById('resultIcon').textContent = isBad ? '📉' : '🎉';
+
+            // Scroll to the result so the user sees it (useful on mobile)
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    </script>
 </body>
 </html>
